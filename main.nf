@@ -29,7 +29,7 @@ directories
 #----------------------------------------------
 */
 
-params.resultsDir = 'results/FIXME'
+params.resultsDir = 'results/mtbseq/mtbfull'
 
 
 /*
@@ -55,7 +55,7 @@ channels
 */
 
 
-Channel.fromFilePairs(params.filePattern)
+Channel.fromFilePairs(params.readsFilePattern)
         .set { ch_in_mtbFull }
 
 /*
@@ -69,7 +69,7 @@ process mtbFull {
 //    container 'quay.io/biocontainers/mtbseq:1.0.4--1'
 
 
-    erroStrategy 'ignore'
+    errorStrategy 'ignore'
 
     when:
     params.mtbFull
@@ -77,14 +77,25 @@ process mtbFull {
     input:
     set genomeFileName, file(genomeReads) from ch_in_mtbFull
 
-//    output:
-//    path FIXME into ch_out_PROCESS
-
+    output:
+    set path("""${genomeFileName}""") into ch_out_multiqc
 
     script:
 
     """
-    MTBSeq --step TBfull --thread 4
+    MTBseq --step TBfull --thread 4
+    
+    mkdir ${genomeFileName}
+    cp -a Amend ./${genomeFileName}/
+    cp -a Bam ./${genomeFileName}/
+    cp -a Called ./${genomeFileName}/
+    cp -a Classification ./${genomeFileName}/
+    cp -a GATK_Bam ./${genomeFileName}/
+    cp -a Groups ./${genomeFileName}/
+    cp -a Joint ./${genomeFileName}/
+    cp -a Mpileup ./${genomeFileName}/
+    cp -a Positoin_Tables ./${genomeFileName}/
+    cp -a Statistics ./${genomeFileName}/
     """
 }
 
