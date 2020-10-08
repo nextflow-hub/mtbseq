@@ -29,7 +29,7 @@ directories
 #----------------------------------------------
 */
 
-params.resultsDir = 'results/mtbseq/mtbfull'
+params.resultsDir = 'results/mtbseq/mtbFull'
 
 
 /*
