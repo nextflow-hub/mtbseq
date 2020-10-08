@@ -67,8 +67,13 @@ PROCESS
 process mtbFull {
     publishDir params.resultsDir, mode: params.saveMode
 //    container 'quay.io/biocontainers/mtbseq:1.0.4--1'
+//    container 'quay.io/biocontainers/mtbseq:1.0.4--pl526_0'
+//    container 'quay.io/biocontainers/mtbseq:1.0.3--pl526_1'
+//    container 'conmeehan/mtbseq:version1'
 
+    container 'arnoldliao95/mtbseq' 
 
+    validExitStatus 0,1,2
     errorStrategy 'ignore'
 
     when:
@@ -78,14 +83,16 @@ process mtbFull {
     set genomeFileName, file(genomeReads) from ch_in_mtbFull
 
     output:
-    set path("""${genomeFileName}""") into ch_out_multiqc
+    path("""${genomeFileName}""") into ch_out_multiqc
 
     script:
 
     """
-    MTBseq --step TBfull --thread 4
-    
+
     mkdir ${genomeFileName}
+   
+    perl /MTBseq_source/MTBseq.pl --step TBfull --thread 8
+    
     cp -a Amend ./${genomeFileName}/
     cp -a Bam ./${genomeFileName}/
     cp -a Called ./${genomeFileName}/
@@ -94,9 +101,11 @@ process mtbFull {
     cp -a Groups ./${genomeFileName}/
     cp -a Joint ./${genomeFileName}/
     cp -a Mpileup ./${genomeFileName}/
-    cp -a Positoin_Tables ./${genomeFileName}/
+    cp -a Position_Tables ./${genomeFileName}/
     cp -a Statistics ./${genomeFileName}/
     """
+
+
 }
 
 
