@@ -1,4 +1,5 @@
 #!/usr/bin/env nextflow
+import java.nio.file.Paths
 
 /*
 #==============================================
@@ -9,26 +10,53 @@ code documentation
 
 /*
 #==============================================
-params
+PARAMS
 #==============================================
 */
 
-params.resultsDir = 'results/FIXME'
-params.saveBy = 'copy'
-params.trimmed = true
+
+/*
+#----------------------------------------------
+flags
+#----------------------------------------------
+*/
+
+params.mtbFull = false
+
+/*
+#----------------------------------------------
+directories
+#----------------------------------------------
+*/
+
+params.resultsDir = 'results/mtbseq/mtbFull'
 
 
-ch_refFILE = Channel.value("$baseDir/refFILE")
+/*
+#----------------------------------------------
+file patterns
+#----------------------------------------------
+*/
 
-inputUntrimmedRawFilePattern = "./*_{R1,R2}.fastq.gz"
+params.readsFilePattern = "./*_{R1,R2}.fastq.gz"
 
-inputTrimmedRawFilePattern = "./*_{R1,R2}.p.fastq.gz"
+/*
+#----------------------------------------------
+misc
+#----------------------------------------------
+*/
 
-inputRawFilePattern = params.trimmed ? inputTrimmedRawFilePattern : inputUntrimmedRawFilePattern
+params.saveMode = 'copy'
+
+/*
+#----------------------------------------------
+channels
+#----------------------------------------------
+*/
 
 
-Channel.fromFilePairs(inputRawFilePattern)
-        .into { ch_in_PROCESS }
+Channel.fromFilePairs(params.readsFilePattern)
+        .set { ch_in_mtbFull }
 
 /*
 #==============================================
@@ -36,22 +64,53 @@ PROCESS
 #==============================================
 */
 
-process PROCESS {
-    publishDir params.resultsDir, mode: params.saveBy
-    container 'FIXME'
+process mtbFull {
+    publishDir params.resultsDir, mode: params.saveMode
+//    container 'quay.io/biocontainers/mtbseq:1.0.4--1'
+//    container 'quay.io/biocontainers/mtbseq:1.0.4--pl526_0'
+//    container 'quay.io/biocontainers/mtbseq:1.0.3--pl526_1'
+//    container 'conmeehan/mtbseq:version1'
 
+    container 'arnoldliao95/mtbseq' 
+
+    validExitStatus 0,1,2
+    errorStrategy 'ignore'
+
+    when:
+    params.mtbFull
 
     input:
-    set genomeFileName, file(genomeReads) from ch_in_PROCESS
+    set genomeFileName, file(genomeReads) from ch_in_mtbFull
 
     output:
-    path FIXME into ch_out_PROCESS
-
+    path("""${genomeFileName}""") into ch_out_multiqc
 
     script:
-    genomeName = genomeFileName.toString().split("\\_")[0]
 
     """
-    CLI PROCESS
+
+    mkdir ${genomeFileName}
+   
+    perl /MTBseq_source/MTBseq.pl --step TBfull --thread 8
+    
+    cp -a Amend ./${genomeFileName}/
+    cp -a Bam ./${genomeFileName}/
+    cp -a Called ./${genomeFileName}/
+    cp -a Classification ./${genomeFileName}/
+    cp -a GATK_Bam ./${genomeFileName}/
+    cp -a Groups ./${genomeFileName}/
+    cp -a Joint ./${genomeFileName}/
+    cp -a Mpileup ./${genomeFileName}/
+    cp -a Position_Tables ./${genomeFileName}/
+    cp -a Statistics ./${genomeFileName}/
     """
+
+
 }
+
+
+/*
+#==============================================
+# extra
+#==============================================
+*/
